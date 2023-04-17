@@ -1,0 +1,93 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<br />
+<b />
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <div>
+
+
+        @*Select new record*@
+        <p>1. Select the latest version of AAI NRF Color Code external file (.xls format).</p>
+        @Html.TextBox("UploadedFile", "", new { type = "File", @class = "hidden", id = "files" })
+        <label for="files">Select file</label>
+        <h4 id="file-name"></h4>
+
+        @*Clean old records*@
+        <p>2. Remove old AAI records from Item Master Table. Please select UAT or PROD database server</p>
+        <button id="delete-button" onclick="location.href='@Url.Action("Delete", "Home")'" type="button">
+            Clean old records
+        </button>
+        @{
+            if (TempData["DeleteStatus"] != null)
+            {
+                <h4 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h4>
+            }
+        }
+        <br />
+        <br />
+
+        @*Insert new records*@
+        <p>3. Insert the latest Lacoste Item Master records into Lacoste Item Master database table</p>
+        <input type="submit" value="Insert new records" />
+
+        <br /><br />
+
+        @{
+
+            if (TempData["MsgChangeStatus"] != null)
+            {
+                <h4 id="change" class="text-danger">@Html.Raw(TempData["MsgChangeStatus"])</h4>
+            }
+
+
+            if (System.Web.HttpContext.Current.Session["process1"] != null)
+            {
+                string raw_output = System.Web.HttpContext.Current.Session["process1"].ToString();
+                var lines = raw_output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    <p>@line</p>
+                }
+            }
+
+        }
+    </div>
+}
+
+<style>
+    label {
+        font: bold 15px Arial;
+        text-decoration: none;
+        background-color: #EEEEEE;
+        color: #333333;
+        padding: 2px 6px 2px 6px;
+        border-top: 1px solid #CCCCCC;
+        border-right: 1px solid #333333;
+        border-bottom: 1px solid #333333;
+        border-left: 1px solid #CCCCCC;
+    }
+</style>
+
+
+<script>
+    document.getElementById('files').onchange = function () {
+        document.getElementById('file-name').innerHTML = this.value.replace(/.*[\/\\]/, '');
+        document.getElementById('delete').innerHTML = "";
+        //document.getElementById('change').innerHTML = "";
+        var p_list = document.getElementsByTagName("p");
+        for (let i = 0; i < p_list.length; i++) {
+            p_list[i].innerHTML = "";
+        }
+    };
+
+    //document.getElementById('delete-button').onclick = function () {
+    //    var p_list = document.getElementsByTagName("p");
+    //    for (let i = 0; i < p_list.length; i++) {
+    //        p_list[i].innerHTML = "";
+    //    }
+    //};
+
+</script>
