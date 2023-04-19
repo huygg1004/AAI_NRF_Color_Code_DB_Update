@@ -29,7 +29,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
         private readonly bool _archiveEnabled;
         private readonly string _connectionString;
 
-        public AAI_File_Upload_Process(string tmpFilePath)
+        public AAI_File_Upload_Process(string tmpFilePath, string userSelectDatabase)
         {
 
             string BuyerShortCode = "AAI";
@@ -42,19 +42,39 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             _failedReportedFolder = HttpContext.Current.Server.MapPath("~/AAI/xfailed/reported");
             _failedSentFolder = HttpContext.Current.Server.MapPath("~/AAI/xfailed");
             _archiveFilePath = HttpContext.Current.Server.MapPath("~/AAI/archive");
-            string defaultContextName = "portal20PS";
-            _connectionString = "Server=localhost;Database=TLO20PSUAT;Trusted_Connection=True;";
+
+            //string defaultContextName = "portal20PS";
+            //_connectionString = "Server=localhost;Database=TLO20PSUAT;Trusted_Connection=True;";
+
+            if (userSelectDatabase == "UAT")
+            {
+                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["UATDB"].ConnectionString;
+            }
+            else if (userSelectDatabase == "PROD")
+            {
+                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["PRODDB"].ConnectionString;
+            }
+            else
+            {
+                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LOCALDB"].ConnectionString;
+            }
         }
 
-        public  void DoWork()
+        public Dictionary<string, int> DoWork()
         {
-            System.Web.HttpContext.Current.Session["process1"] = "Entering LACOSTEPostprocessCycle.DoWork" + Environment.NewLine;
+            //System.Web.HttpContext.Current.Session["process1"] = "Entering LACOSTEPostprocessCycle.DoWork" + Environment.NewLine;
 
             var inputFiles = (new DirectoryInfo(_inputFolder)).GetFiles($@"*.{FILE_EXTENSION_IN}").ToList();
-            ImportExcelDataToSql(inputFiles[0].FullName, "sample upc + nrf color report -", "tblItemMaster");
+            var CountOutputDictionary = ImportExcelDataToSql(inputFiles[0].FullName, "sample upc + nrf color report -", "tblItemMaster");
+
+            return CountOutputDictionary;
         }
-        public void ImportExcelDataToSql(string filePath, string sheetName, string tableName)
+        public Dictionary<string, int> ImportExcelDataToSql(string filePath, string sheetName, string tableName)
         {
+            System.Web.HttpContext.Current.Session["process1"] = " ";
+
+            Dictionary<string, int> OutputDictionary = new Dictionary<string, int>();
+
             // Open the Excel file using ExcelDataReader
             FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
             IExcelDataReader excelReader = ExcelReaderFactory.CreateReader(stream);
@@ -119,11 +139,15 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
 
             System.Web.HttpContext.Current.Session["process1"] += "Inserted:" + countInsert + " Updated:" + countUpdate + " Total Record:" + masterValueList.Count() + Environment.NewLine;
 
+            OutputDictionary.Add("Count Update", countUpdate);
+            OutputDictionary.Add("Count Insert", countInsert);
 
 
             // Close the Excel reader and stream
             excelReader.Close();
             stream.Close();
+
+            return OutputDictionary;
         }
 
         private class ItemMasterTableList
@@ -231,9 +255,9 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandType = CommandType.Text;
-                    command.CommandText = @"UPDATE tblItemMaster SET BUYERLONGCODE=@BUYERLONGCODE,ORGANIZATION=@ORGANIZATION,UPC=@UPC,
-                                            COLORCODE=@ColorCode, LASTMODIFIEDBY=@LASTMODIFIEDBY
-                                            WHERE BUYERLONGCODE='ARIELASSOCINT' AND ORGANIZATION=@ORGANIZATION AND LABEL=@LABEL";
+                    command.CommandText = @"UPDATE tblItemMaster SET BUYERLONGCODE=@BUYERLONGCODE,ORGANIZATION=@ORGANIZATION,LABEL = @LABEL, UPC=@UPC,
+                                            COLORCODE=@COLORCODE, LASTMODIFIEDBY=@LASTMODIFIEDBY
+                                            WHERE BUYERLONGCODE='ARIELASSOCINT' AND ORGANIZATION=@ORGANIZATION AND LABEL=@LABEL AND UPC = @UPC AND COLORCODE=@COLORCODE AND LASTMODIFIEDBY = @LASTMODIFIEDBY";
 
                     command.Parameters.AddWithValue("@BUYERLONGCODE", BUYERLONGCODE);
                     command.Parameters.AddWithValue("@ORGANIZATION", ORGANIZATION);

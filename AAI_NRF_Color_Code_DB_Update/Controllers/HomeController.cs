@@ -21,6 +21,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
             return View();
         }
 
+
         [HttpPost]
         public ActionResult Index(HttpPostedFileBase UploadedFile)
         {
@@ -43,12 +44,25 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
 
                 var tempFilePath = Path.Combine(Server.MapPath("~/AAI/upload/tmp"), FileName);
 
-                var payload_AAINRF_Process_Cycle = new AAI_File_Upload_Process(tempFilePath);
+                var userSelectDatabase = Request.Form["UserSelectDatabase"].ToString(); //this will get selected value
+
+                var payload_AAINRF_Process_Cycle = new AAI_File_Upload_Process(tempFilePath, userSelectDatabase);
                 try
                 {
-                    payload_AAINRF_Process_Cycle.DoWork();
+                    var CountsDictionary = payload_AAINRF_Process_Cycle.DoWork();
 
-                    TempData["MsgChangeStatus"] += "Records have been successfully inserted into DB";
+                    string OutputMessage = "";
+
+                    if (CountsDictionary["Count Update"] > 0)
+                    {
+                        OutputMessage = $"Total {CountsDictionary["Count Update"].ToString()} AAI new records have been updated to UAT/PROD database successfully.";
+                    }
+                    else if (CountsDictionary["Count Insert"] > 0)
+                    {
+                        OutputMessage = $"Total {CountsDictionary["Count Insert"].ToString()} AAI new records have been inserted to UAT/PROD database successfully.";
+                    }
+
+                    TempData["MsgChangeStatus"] += OutputMessage;
 
                     return View("Index");
                 }
@@ -58,19 +72,34 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                     return View("Index");
                     throw;
                 }
+            }
+            return View();
+        }
 
+
+        [HttpPost]
+        public ActionResult Delete()
+        {
+            string connectionString = "";
+            var userSelectDatabase = Request.Form["DeleteUserDBSelect"].ToString(); //this will get selected value
+
+            if (userSelectDatabase == "UAT")
+            {
+                connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["UATDB"].ConnectionString;
+            }
+            else if (userSelectDatabase == "PROD")
+            {
+                connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["PRODDB"].ConnectionString;
+            }
+            else
+            {
+                connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LOCALDB"].ConnectionString;
             }
 
 
-            return View();
-        }
-        public ActionResult Delete()
-        {
-            string connectionString = "Server = localhost; Database = TLO20PSUAT; Trusted_Connection = True; ";
-
             SqlConnection connection = new SqlConnection(connectionString);
 
-            string sqlStatement = "DELETE FROM tblItemMaster;";
+            string sqlStatement = "DELETE FROM tblItemMaster WHERE BUYERLONGCODE = 'ARIELASSOCINT';";
 
             try
             {
@@ -78,7 +107,18 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                 SqlCommand cmd = new SqlCommand(sqlStatement, connection);
                 cmd.CommandType = CommandType.Text;
                 int numRows = cmd.ExecuteNonQuery();
-                TempData["DeleteStatus"] += "Records have been removed successfully from DB.";
+
+                string deleteMessage = "";
+                if (userSelectDatabase == "UAT")
+                {
+                    deleteMessage = $"Total {numRows.ToString()} AAI old records have been removed from UAT database successfully.";
+                }
+                else if (userSelectDatabase == "PROD")
+                {
+                    deleteMessage = $"Total {numRows.ToString()} AAI old records have been removed from PROD database successfully.";
+                }
+                
+                TempData["DeleteStatus"] += deleteMessage;
                 TempData["MsgChangeStatus"] = " ";
                 System.Web.HttpContext.Current.Session["process1"] = "";
             }
@@ -92,7 +132,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
             }
 
             return RedirectToAction("Index");
-
         }
 
     }

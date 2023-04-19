@@ -1,45 +1,85 @@
 ﻿@{
     ViewBag.Title = "Home Page";
 }
-<br />
+
 <b />
 
-@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+<br />
+
+@*Clean old records*@
+<p>1. Remove old AAI records from Item Master Table. Please select UAT or PROD database server</p>
+
+@*@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id="deleteForm" }))*@
+@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { id="deleteForm" }))
+{
+<div class="container">
+    <div class="left-element">
+        <input type="submit" value="Clean old records " />
+    </div>
+    <div class="right-element">
+        @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
+        {
+            new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+            new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+        }, "Select Database")
+    </div>
+</div>
+}
+@{
+    if (TempData["DeleteStatus"] != null)
+    {
+        <div class="container">
+            <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
+        </div>
+
+    }
+}
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm" }))
 {
     <div>
-
+        <br />
 
         @*Select new record*@
-        <p>1. Select the latest version of AAI NRF Color Code external file (.xls format).</p>
+        <p>2. Select the latest version of AAI NRF Color Code external file (.xls format).</p>
         @Html.TextBox("UploadedFile", "", new { type = "File", @class = "hidden", id = "files" })
-        <label for="files">Select file</label>
-        <h4 id="file-name"></h4>
 
-        @*Clean old records*@
-        <p>2. Remove old AAI records from Item Master Table. Please select UAT or PROD database server</p>
-        <button id="delete-button" onclick="location.href='@Url.Action("Delete", "Home")'" type="button">
-            Clean old records
-        </button>
-        @{
-            if (TempData["DeleteStatus"] != null)
-            {
-                <h4 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h4>
-            }
-        }
-        <br />
+        <div class="container">
+            <label for="files">Select file</label>
+        </div>
+
+        <div class="container"><p style="color: red;" id="file-name"></p></div>
+
+
+
+
         <br />
 
         @*Insert new records*@
-        <p>3. Insert the latest Lacoste Item Master records into Lacoste Item Master database table</p>
-        <input type="submit" value="Insert new records" />
+        <p>3. Insert latest AAI records records to Item Master Table. Please select UAT or PROD database server.</p>
 
-        <br /><br />
+        <div class="container">
+            <div class="left-element">
+                <input type="submit" value="Insert new records" />
+            </div>
+            <div class="right-element">
+                @Html.DropDownList("UserSelectDatabase", new List<SelectListItem>
+                {
+                   new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+                   new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+                }, "Select Database")
+            </div>
+        </div>
+        <br />
 
         @{
 
             if (TempData["MsgChangeStatus"] != null)
             {
-                <h4 id="change" class="text-danger">@Html.Raw(TempData["MsgChangeStatus"])</h4>
+                <div class="container">
+                    <h5 id="change" class="text-danger">@Html.Raw(TempData["MsgChangeStatus"])</h5>
+                </div>
+
             }
 
 
@@ -47,10 +87,13 @@
             {
                 string raw_output = System.Web.HttpContext.Current.Session["process1"].ToString();
                 var lines = raw_output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
-                {
-                    <p>@line</p>
-                }
+
+                <div class="container">
+                    @foreach (var line in lines)
+                    {
+                        <h6>@line</h6>
+                    }
+                </div>
             }
 
         }
@@ -69,6 +112,18 @@
         border-bottom: 1px solid #333333;
         border-left: 1px solid #CCCCCC;
     }
+
+    .container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        font-size: 15px;
+    }
+
+    .left-element {
+        margin-right: 40px;
+    }
 </style>
 
 
@@ -76,18 +131,28 @@
     document.getElementById('files').onchange = function () {
         document.getElementById('file-name').innerHTML = this.value.replace(/.*[\/\\]/, '');
         document.getElementById('delete').innerHTML = "";
-        //document.getElementById('change').innerHTML = "";
-        var p_list = document.getElementsByTagName("p");
-        for (let i = 0; i < p_list.length; i++) {
-            p_list[i].innerHTML = "";
-        }
     };
 
-    //document.getElementById('delete-button').onclick = function () {
-    //    var p_list = document.getElementsByTagName("p");
-    //    for (let i = 0; i < p_list.length; i++) {
-    //        p_list[i].innerHTML = "";
-    //    }
-    //};
+    var myParagraph = document.getElementById('file-name');
+    var observer = new MutationObserver(function (mutationsList) {
+        // Loop through the mutations that occurred
+        for (var mutation of mutationsList) {
+            if (mutation.type === 'childList' && mutation.target.nodeName === 'P') {
+                console.log('The text has changed');
+                var h5_list = document.getElementsByTagName("h5");
+                for (let i = 0; i < h5_list.length; i++) {
+                    h5_list[i].innerHTML = "";
+                }
+
+                var h6_list = document.getElementsByTagName("h6");
+                for (let i = 0; i < h6_list.length; i++) {
+                    h6_list[i].innerHTML = "";
+                }
+            }
+        }
+    });
+
+    // Observe changes to the paragraph element's text content
+    observer.observe(myParagraph, { childList: true });
 
 </script>
