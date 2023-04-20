@@ -55,11 +55,11 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
 
                     if (CountsDictionary["Count Update"] > 0)
                     {
-                        OutputMessage = $"Total {CountsDictionary["Count Update"].ToString()} AAI new records have been updated to UAT/PROD database successfully.";
+                        OutputMessage = $"Total {CountsDictionary["Count Update"].ToString()} AAI new records have been updated to {userSelectDatabase.ToString()} database successfully.";
                     }
                     else if (CountsDictionary["Count Insert"] > 0)
                     {
-                        OutputMessage = $"Total {CountsDictionary["Count Insert"].ToString()} AAI new records have been inserted to UAT/PROD database successfully.";
+                        OutputMessage = $"Total {CountsDictionary["Count Insert"].ToString()} AAI new records have been inserted to {userSelectDatabase.ToString()} database successfully.";
                     }
 
                     TempData["MsgChangeStatus"] += OutputMessage;

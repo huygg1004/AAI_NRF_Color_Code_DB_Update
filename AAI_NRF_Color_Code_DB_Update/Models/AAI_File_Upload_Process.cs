@@ -35,7 +35,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             string BuyerShortCode = "AAI";
 
             _inputFolder = HttpContext.Current.Server.MapPath("~/AAI/upload");
-            //_workingFolder = HttpContext.Current.Server.MapPath("~/AAI/Upload/tmp");
             _workingFolder = tmpFilePath;
             _outputFolder = HttpContext.Current.Server.MapPath("~/AAI");
             _failedFolder = HttpContext.Current.Server.MapPath("~/AAI/xfailed");
@@ -43,27 +42,23 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             _failedSentFolder = HttpContext.Current.Server.MapPath("~/AAI/xfailed");
             _archiveFilePath = HttpContext.Current.Server.MapPath("~/AAI/archive");
 
-            //string defaultContextName = "portal20PS";
-            //_connectionString = "Server=localhost;Database=TLO20PSUAT;Trusted_Connection=True;";
+            switch (userSelectDatabase)
+            {
+                case "UAT":
+                    _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["UATDB"].ConnectionString;
+                    break;
+                case "PROD":
+                    _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["PRODDB"].ConnectionString;
+                    break;
+                default:
+                    _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LOCALDB"].ConnectionString;
+                    break;
+            }
 
-            if (userSelectDatabase == "UAT")
-            {
-                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["UATDB"].ConnectionString;
-            }
-            else if (userSelectDatabase == "PROD")
-            {
-                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["PRODDB"].ConnectionString;
-            }
-            else
-            {
-                _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LOCALDB"].ConnectionString;
-            }
         }
 
         public Dictionary<string, int> DoWork()
         {
-            //System.Web.HttpContext.Current.Session["process1"] = "Entering LACOSTEPostprocessCycle.DoWork" + Environment.NewLine;
-
             var inputFiles = (new DirectoryInfo(_inputFolder)).GetFiles($@"*.{FILE_EXTENSION_IN}").ToList();
             var CountOutputDictionary = ImportExcelDataToSql(inputFiles[0].FullName, "sample upc + nrf color report -", "tblItemMaster");
 
@@ -71,7 +66,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
         }
         public Dictionary<string, int> ImportExcelDataToSql(string filePath, string sheetName, string tableName)
         {
-            System.Web.HttpContext.Current.Session["process1"] = " ";
+            System.Web.HttpContext.Current.Session["process1"] = "";
 
             Dictionary<string, int> OutputDictionary = new Dictionary<string, int>();
 
@@ -108,7 +103,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             int countInsert = 0;
             int countUpdate = 0;
 
-
+            //DATA INSERTION or UPDATE
             foreach (var masterItem in masterValueList)
             {
                 SqlConnection connection = new SqlConnection(_connectionString);
@@ -150,6 +145,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             return OutputDictionary;
         }
 
+        //Data Model
         private class ItemMasterTableList
         {
             public string BUYERLONGCODE { get; set; }
@@ -165,17 +161,13 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             List<ItemMasterTableList> MasterItemList = new List<ItemMasterTableList>();
             try
             {
-                //XSSFWorkbook workbook;
                 HSSFWorkbook workbook;
-                //using (FileStream file = new FileStream(@"C:\TEST\FTP\FXR\upload\850\ASN0000002.xlsx", FileMode.Open, FileAccess.Read))
                 using (FileStream file = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
                 {
-                    //workbook = new XSSFWorkbook(file);
                     workbook = new HSSFWorkbook(file);
-
                 }
 
-                var sheet = workbook.GetSheetAt(0); // first sheet
+                var sheet = workbook.GetSheetAt(0);
                 int SeqID = 0;
                 for (var i = 1; i <= sheet.LastRowNum; i++)
                 {
@@ -183,11 +175,8 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
                     if (row == null) continue;
 
                     string colSender = "AAI";
-
-                    //string colSupplier = row.GetCell(0) == null ? "NULL" : row.GetCell(0).ToString();
                     string colUPC = row.GetCell(0).ToString();
-                    //string colTarif = row.GetCell(1) == null ? "" : row.GetCell(1).ToString().Trim();
-                        string colCOLORCODE = row.GetCell(1).ToString();
+                    string colCOLORCODE = row.GetCell(1).ToString();
 
 
                     if (IsNullOrWhiteSpace(colUPC) == true || IsNullOrWhiteSpace(colCOLORCODE) == true)
@@ -212,7 +201,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             }
             catch (Exception e1)
             {
-                //Logger.Error(string.Format("Load Item Master Table: exceptional error occured...{0}", e1.Message), BuyerShortCode, DocumentCode, CorrelationId);
                 return MasterItemList;
             }
         }
@@ -221,7 +209,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
         {
             try
             {
-                //using (var connection = new SqlConnection(_connectionString))
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandType = CommandType.Text;
@@ -265,7 +252,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
                     command.Parameters.AddWithValue("@UPC", (UPC == "#N/A") ? Convert.DBNull : UPC);
                     command.Parameters.AddWithValue("@COLORCODE", (COLORCODE == "#N/A") ? Convert.DBNull : COLORCODE);
                     command.Parameters.AddWithValue("@LASTMODIFIEDBY", LASTMODIFIEDBY);
-                    //command.Parameters.AddWithValue("@ModifiedDate", DateTime.Now);
                     var result = command.ExecuteScalar();
                 }
             }

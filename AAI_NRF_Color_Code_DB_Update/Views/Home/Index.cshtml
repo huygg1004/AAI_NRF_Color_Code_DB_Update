@@ -1,29 +1,27 @@
 ﻿@{
     ViewBag.Title = "Home Page";
 }
-
 <b />
-
 <br />
 
-@*Clean old records*@
-<p>1. Remove old AAI records from Item Master Table. Please select UAT or PROD database server</p>
-
-@*@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id="deleteForm" }))*@
-@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { id="deleteForm" }))
+@* Clean old records *@
+<p>
+    1. Remove old AAI records from Item Master Table. Please select UAT or PROD database server
+</p>
+@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { id = "deleteForm" }))
 {
-<div class="container">
-    <div class="left-element">
-        <input type="submit" value="Clean old records " />
+    <div class="container">
+        <div class="left-element">
+            <input type="submit" value="Clean old records " />
+        </div>
+        <div class="right-element">
+            @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
+            {
+                new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+                new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+            }, "Select Database")
+        </div>
     </div>
-    <div class="right-element">
-        @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
-        {
-            new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
-            new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
-        }, "Select Database")
-    </div>
-</div>
 }
 @{
     if (TempData["DeleteStatus"] != null)
@@ -31,33 +29,31 @@
         <div class="container">
             <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
         </div>
-
     }
 }
 
+@* Insert new records *@
 @using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm" }))
 {
     <div>
         <br />
-
-        @*Select new record*@
-        <p>2. Select the latest version of AAI NRF Color Code external file (.xls format).</p>
+        <p>
+            2. Select the latest version of AAI NRF Color Code external file (.xls format).
+        </p>
         @Html.TextBox("UploadedFile", "", new { type = "File", @class = "hidden", id = "files" })
-
         <div class="container">
             <label for="files">Select file</label>
         </div>
-
-        <div class="container"><p style="color: red;" id="file-name"></p></div>
-
-
-
-
+        <div class="container">
+            <p style="color: red;" id="file-name"></p>
+        </div>
         <br />
 
-        @*Insert new records*@
-        <p>3. Insert latest AAI records records to Item Master Table. Please select UAT or PROD database server.</p>
+        @*<---------------------------------------------------->*@
 
+        <p>
+            3. Insert latest AAI records records to Item Master Table. Please select UAT or PROD database server.
+        </p>
         <div class="container">
             <div class="left-element">
                 <input type="submit" value="Insert new records" />
@@ -72,22 +68,19 @@
         </div>
         <br />
 
+        @* Display Messages *@
         @{
-
             if (TempData["MsgChangeStatus"] != null)
             {
                 <div class="container">
                     <h5 id="change" class="text-danger">@Html.Raw(TempData["MsgChangeStatus"])</h5>
                 </div>
-
             }
-
 
             if (System.Web.HttpContext.Current.Session["process1"] != null)
             {
                 string raw_output = System.Web.HttpContext.Current.Session["process1"].ToString();
                 var lines = raw_output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
                 <div class="container">
                     @foreach (var line in lines)
                     {
@@ -95,7 +88,6 @@
                     }
                 </div>
             }
-
         }
     </div>
 }
@@ -135,7 +127,6 @@
 
     var myParagraph = document.getElementById('file-name');
     var observer = new MutationObserver(function (mutationsList) {
-        // Loop through the mutations that occurred
         for (var mutation of mutationsList) {
             if (mutation.type === 'childList' && mutation.target.nodeName === 'P') {
                 console.log('The text has changed');
@@ -143,7 +134,6 @@
                 for (let i = 0; i < h5_list.length; i++) {
                     h5_list[i].innerHTML = "";
                 }
-
                 var h6_list = document.getElementsByTagName("h6");
                 for (let i = 0; i < h6_list.length; i++) {
                     h6_list[i].innerHTML = "";
