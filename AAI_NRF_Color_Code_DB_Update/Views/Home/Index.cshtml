@@ -33,7 +33,7 @@
 @using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm", onsubmit = "return checkDatabaseSelectionInsert();" }))
 {
     <div>
-        <br />
+
         <p>
             2. Select the latest version of AAI NRF Color Code external file (.xls format).
         </p>
@@ -44,6 +44,9 @@
         <div class="container">
             <p style="color: red;" id="file-name"></p>
         </div>
+        <div class="container">
+            <p style="color: red;" id="fail-file"></p>
+        </div>
         <br />
 
         @*<---------------------------------------------------->*@
@@ -53,19 +56,23 @@
         </p>
         <div class="container">
             <div class="left-element">
-                <input type="submit" value="Insert new records" onclick="checkDatabaseSelection()   />
+                <input type="submit" value="Insert new records" onclick="displayLoadingMessage()" />
             </div>
             <div class="right-element">
                 @Html.DropDownList("UserSelectDatabase", new List<SelectListItem>
                 {
-                   new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
-                   new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+                  new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+                  new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
                 }, "Select Database")
             </div>
+
         </div>
         <br />
         <p id="noInsertSelect"></p>
 
+
+        <br />
+        <p id="loadingMsg"></p>
 
         @* Display Messages *@
         @{
@@ -119,6 +126,13 @@
     #myMessage {
         color: red;
     }
+
+    #loadingMsg {
+        margin-left: 20px;
+        margin-top: 10px;
+        color: red;
+        font-weight: bold;
+    }
 </style>
 
 
@@ -141,6 +155,8 @@
                 for (let i = 0; i < h6_list.length; i++) {
                     h6_list[i].innerHTML = "";
                 }
+
+                document.getElementById("fail-file").innerHTML = "";
             }
         }
     });
@@ -170,29 +186,6 @@
         }
     }
 
-
-    @*function checkDatabaseSelectionInsert() {
-        var selectedValue = document.getElementById("UserSelectDatabase").value;
-        if (selectedValue === "" || selectedValue === null) {
-            document.getElementById("myMessage").innerHTML = "No operation because UAT or PROD database is not selected yet.";
-            document.getElementById("insert").innerHTML = "";
-            return false;
-        } else {
-            $.ajax({
-                url: '@Url.Action("Insert", "Home")',
-                type: 'POST',
-                data: { userSelect: selectedValue },
-                complete: function(xhr, status) {
-                    console.log("Finished");
-                    var numInserted = xhr.responseJSON.numInserted;
-                    document.getElementById("insert").innerHTML = "Total " + numInserted + " AAI old records have been inserted into " + selectedValue + " database successfully.";
-                    document.getElementById("myMessage").innerHTML = "";
-                }
-            });
-            return true;
-        }
-    }*@
-
     function checkDatabaseSelectionInsert() {
         var selectedValue = document.getElementById("UserSelectDatabase").value;
         if (selectedValue === "") {
@@ -207,6 +200,12 @@
     }
 
 
+    function displayLoadingMessage() {
+        var loadingMsg = document.getElementById("loadingMsg");
+        loadingMsg.innerHTML = "<span style='color:red; font-weight:bold;'>Database insertion is in progress. Please wait a while....</span><br><img src='https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif' width='100' height='100'>";
+        // add your other code here
+    }
+
 </script>
 
 @if (ViewBag.DeleteElements != null && ViewBag.DeleteElements == true)
@@ -214,5 +213,14 @@
     <script>
         document.getElementById("delete").innerHTML = "";
 
+    </script>
+}
+
+
+
+@if (ViewBag.InvalidFile != null && ViewBag.InvalidFile == true)
+{
+    <script>
+        document.getElementById("fail-file").innerHTML = "The file validation is failed because UPC / NRF code is missing";
     </script>
 }

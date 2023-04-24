@@ -47,9 +47,15 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                 var userSelectDatabase = Request.Form["UserSelectDatabase"].ToString(); //this will get selected value
 
                 var payload_AAINRF_Process_Cycle = new AAI_File_Upload_Process(tempFilePath, userSelectDatabase);
+
                 try
                 {
                     var CountsDictionary = payload_AAINRF_Process_Cycle.DoWork();
+                    if (CountsDictionary["Count Update"] == 0 && CountsDictionary["Count Insert"] == 0)
+                    {
+                        ViewBag.InvalidFile = true;
+                        return View("Index");
+                    }
 
                     string OutputMessage = "";
 
@@ -60,6 +66,10 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                     else if (CountsDictionary["Count Insert"] > 0)
                     {
                         OutputMessage = $"Total {CountsDictionary["Count Insert"].ToString()} AAI new records have been inserted to {userSelectDatabase.ToString()} database successfully.";
+                    }
+                    else if (CountsDictionary["Count Update"] == 0 && CountsDictionary["Count Insert"] == 0)
+                    {
+                        return View("Index");
                     }
 
                     TempData["MsgChangeStatus"] += OutputMessage;

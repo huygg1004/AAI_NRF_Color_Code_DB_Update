@@ -97,6 +97,17 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
             string NRF_From_Stylemaster_Detail = columnNames[1];
 
             List<ItemMasterTableList> masterItemList = loadItemMaterTableList(_workingFolder);
+
+            bool IsMissing = masterItemList.Any(item => string.IsNullOrEmpty(item.UPC) || string.IsNullOrEmpty(item.COLORCODE));
+            if (IsMissing)
+            {
+                OutputDictionary.Add("Count Update", 0);
+                OutputDictionary.Add("Count Insert", 0);
+                return OutputDictionary;
+            }
+
+
+
             var masterValueList = masterItemList;
 
             int totalRecord = 0;
@@ -178,24 +189,16 @@ namespace AAI_NRF_Color_Code_DB_Update.Models
                     string colUPC = row.GetCell(0).ToString();
                     string colCOLORCODE = row.GetCell(1).ToString();
 
-
-                    if (IsNullOrWhiteSpace(colUPC) == true || IsNullOrWhiteSpace(colCOLORCODE) == true)
+                    MasterItemList.Add(new ItemMasterTableList()
                     {
-                        failedWithMissingColumn("Missing UPC Number or Color Code", i, inputFile);
-                    }
+                        BUYERLONGCODE = "ARIELASSOCINT",
+                        ORGANIZATION = "ARIELASSOCINT",
+                        LABEL = "ARIELASSOCINT Item Master",
+                        UPC = colUPC,
+                        COLORCODE = colCOLORCODE,
+                        LASTMODIFIEDBY = "TLO"
+                    });
 
-                    if (colUPC != "NULL" && colCOLORCODE != "NULL")
-                    {
-                        MasterItemList.Add(new ItemMasterTableList()
-                        {
-                            BUYERLONGCODE = "ARIELASSOCINT",
-                            ORGANIZATION = "ARIELASSOCINT",
-                            LABEL = "ARIELASSOCINT Item Master",
-                            UPC = colUPC,
-                            COLORCODE = colCOLORCODE,
-                            LASTMODIFIEDBY = "TLO"
-                        });
-                    }
                 }
                 return MasterItemList;
             }
