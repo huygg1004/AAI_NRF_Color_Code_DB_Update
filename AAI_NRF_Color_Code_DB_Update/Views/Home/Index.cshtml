@@ -8,32 +8,29 @@
 <p>
     1. Remove old AAI records from Item Master Table. Please select UAT or PROD database server
 </p>
-@using (Html.BeginForm("Delete", "Home", FormMethod.Post, new { id = "deleteForm" }))
-{
-    <div class="container">
-        <div class="left-element">
-            <input type="submit" value="Clean old records " />
-        </div>
-        <div class="right-element">
-            @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
-            {
-                new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
-                new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
-            }, "Select Database")
-        </div>
+
+<div class="container">
+    <div class="left-element">
+        <input type="submit" value="Clean old records" onclick="return checkDatabaseSelectionDelete();" />
     </div>
-}
-@{
-    if (TempData["DeleteStatus"] != null)
-    {
-        <div class="container">
-            <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
-        </div>
-    }
-}
+    <div class="right-element">
+        @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
+        {
+            new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+            new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+        }, "Select Database")
+    </div>
+</div>
+<br />
+<p id="myMessage"></p>
+
+<div class="container">
+    <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
+</div>
+
 
 @* Insert new records *@
-@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm" }))
+@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm", onsubmit = "return checkDatabaseSelectionInsert();" }))
 {
     <div>
         <br />
@@ -56,7 +53,7 @@
         </p>
         <div class="container">
             <div class="left-element">
-                <input type="submit" value="Insert new records" />
+                <input type="submit" value="Insert new records" onclick="checkDatabaseSelection()   />
             </div>
             <div class="right-element">
                 @Html.DropDownList("UserSelectDatabase", new List<SelectListItem>
@@ -67,6 +64,8 @@
             </div>
         </div>
         <br />
+        <p id="noInsertSelect"></p>
+
 
         @* Display Messages *@
         @{
@@ -116,6 +115,10 @@
     .left-element {
         margin-right: 40px;
     }
+
+    #myMessage {
+        color: red;
+    }
 </style>
 
 
@@ -145,4 +148,71 @@
     // Observe changes to the paragraph element's text content
     observer.observe(myParagraph, { childList: true });
 
+    function checkDatabaseSelectionDelete() {
+        var selectedValue = document.getElementById("DeleteUserDBSelect").value;
+        if (selectedValue === "") {
+            document.getElementById("myMessage").innerHTML = "No operation because UAT or PROD database is not selected yet.";
+            document.getElementById("delete").innerHTML = "";
+            return false;
+        } else {
+            $.ajax({
+                url: '@Url.Action("Delete", "Home")',
+                type: 'POST',
+                data: { userSelect: selectedValue },
+                complete: function(xhr, status) {
+                    console.log("Finished");
+                    var numDeleted = xhr.responseJSON.numDeleted;
+                    document.getElementById("delete").innerHTML = "Total " + numDeleted + " AAI old records have been removed from " + selectedValue + " database successfully.";
+                    document.getElementById("myMessage").innerHTML = "";
+                }
+            });
+            return true;
+        }
+    }
+
+
+    @*function checkDatabaseSelectionInsert() {
+        var selectedValue = document.getElementById("UserSelectDatabase").value;
+        if (selectedValue === "" || selectedValue === null) {
+            document.getElementById("myMessage").innerHTML = "No operation because UAT or PROD database is not selected yet.";
+            document.getElementById("insert").innerHTML = "";
+            return false;
+        } else {
+            $.ajax({
+                url: '@Url.Action("Insert", "Home")',
+                type: 'POST',
+                data: { userSelect: selectedValue },
+                complete: function(xhr, status) {
+                    console.log("Finished");
+                    var numInserted = xhr.responseJSON.numInserted;
+                    document.getElementById("insert").innerHTML = "Total " + numInserted + " AAI old records have been inserted into " + selectedValue + " database successfully.";
+                    document.getElementById("myMessage").innerHTML = "";
+                }
+            });
+            return true;
+        }
+    }*@
+
+    function checkDatabaseSelectionInsert() {
+        var selectedValue = document.getElementById("UserSelectDatabase").value;
+        if (selectedValue === "") {
+            document.getElementById("noInsertSelect").innerHTML = "No operation because UAT or PROD database is not selected yet.";
+            document.getElementById("noInsertSelect").style.color = "red";
+            document.querySelector('h6').innerHTML = "";
+            document.getElementById('change').innerHTML = "";
+            document.getElementById("delete").innerHTML = "";
+            return false;
+        }
+        return true;
+    }
+
+
 </script>
+
+@if (ViewBag.DeleteElements != null && ViewBag.DeleteElements == true)
+{
+    <script>
+        document.getElementById("delete").innerHTML = "";
+
+    </script>
+}

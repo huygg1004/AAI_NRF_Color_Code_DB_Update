@@ -64,6 +64,8 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
 
                     TempData["MsgChangeStatus"] += OutputMessage;
 
+                    ViewBag.DeleteElements = true;
+
                     return View("Index");
                 }
                 catch (Exception ex)
@@ -73,15 +75,18 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                     throw;
                 }
             }
+           
             return View();
         }
 
-
-        [HttpPost]
-        public ActionResult Delete()
+        public ActionResult Delete(string userSelect)
         {
             string connectionString = "";
-            var userSelectDatabase = Request.Form["DeleteUserDBSelect"].ToString(); //this will get selected value
+            if (userSelect == "" || userSelect == null)
+            {
+                return RedirectToAction("Index");
+            }
+            var userSelectDatabase = userSelect;
 
             if (userSelectDatabase == "UAT")
             {
@@ -95,7 +100,6 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
             {
                 connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LOCALDB"].ConnectionString;
             }
-
 
             SqlConnection connection = new SqlConnection(connectionString);
 
@@ -117,10 +121,13 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
                 {
                     deleteMessage = $"Total {numRows.ToString()} AAI old records have been removed from PROD database successfully.";
                 }
-                
+
                 TempData["DeleteStatus"] += deleteMessage;
                 TempData["MsgChangeStatus"] = " ";
                 System.Web.HttpContext.Current.Session["process1"] = "";
+
+                // Return JSON object with number of records deleted
+                return Json(new { numDeleted = numRows });
             }
             catch (Exception ex)
             {
@@ -133,6 +140,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
 
             return RedirectToAction("Index");
         }
+
 
     }
 }
