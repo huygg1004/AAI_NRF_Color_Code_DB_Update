@@ -4,38 +4,18 @@
 <b />
 <br />
 
-@* Clean old records *@
-<p>
-    1. Remove old AAI records from Item Master Table. Please select UAT or PROD database server
-</p>
 
-<div class="container">
-    <div class="left-element">
-        <input type="submit" value="Clean old records" onclick="return checkDatabaseSelectionDelete();" />
-    </div>
-    <div class="right-element">
-        @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
-        {
-            new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
-            new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
-        }, "Select Database")
-    </div>
-</div>
-<br />
-<p id="myMessage"></p>
-
-<div class="container">
-    <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
-</div>
 
 
 @* Insert new records *@
 @using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data", id = "insertForm", onsubmit = "return checkDatabaseSelectionInsert();" }))
 {
     <div>
+        @*<---------------------------------------------------->*@
+        @*SELECT FILE*@ 
 
         <p>
-            2. Select the latest version of AAI NRF Color Code external file (.xls format).
+            1. Select the latest version of AAI NRF Color Code external file (.xls format).
         </p>
         @Html.TextBox("UploadedFile", "", new { type = "File", @class = "hidden", id = "files" })
         <div class="container">
@@ -50,6 +30,33 @@
         <br />
 
         @*<---------------------------------------------------->*@
+
+        @* Clean old records *@
+        <p>
+            2. Remove old AAI records from Item Master Table. Please select UAT or PROD database server
+        </p>
+
+        <div class="container">
+            <div class="left-element">
+                <button type="button" onclick="checkDatabaseSelectionDelete();">Clean old records</button>
+            </div>
+            <div class="right-element">
+                @Html.DropDownList("DeleteUserDBSelect", new List<SelectListItem>
+                {
+                    new SelectListItem{ Text="UAT (Server 11.121)", Value = "UAT" },
+                    new SelectListItem{ Text="PROD (Server 11.57)", Value = "PROD" },
+                }, "Select Database")
+            </div>
+        </div>
+        <br />
+        <p id="myMessage"></p>
+
+        <div class="container">
+            <h5 id="delete" class="text-danger">@Html.Raw(TempData["DeleteStatus"])</h5>
+        </div>
+
+        @*<---------------------------------------------------->*@
+        @*INSERT NEW RECORD TO DB*@
 
         <p>
             3. Insert latest AAI records records to Item Master Table. Please select UAT or PROD database server.

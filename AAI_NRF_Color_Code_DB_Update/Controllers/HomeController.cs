@@ -10,6 +10,7 @@ using AAI_NRF_Color_Code_DB_Update.Models;
 using System.Data.SqlClient;
 using System.Data;
 using System.Web.UI;
+using ExcelDataReader;
 
 namespace AAI_NRF_Color_Code_DB_Update.Controllers
 {
@@ -25,6 +26,7 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
         [HttpPost]
         public ActionResult Index(HttpPostedFileBase UploadedFile)
         {
+            TempData["MsgChangeStatus"] = "";
             if (UploadedFile?.ContentLength == null)
             {
                 Response.Write("<script>alert('Please choose at least one file');</script>");
@@ -37,15 +39,53 @@ namespace AAI_NRF_Color_Code_DB_Update.Controllers
 
                 string FolderPath = Path.Combine(Server.MapPath("~/AAI/upload"), FileName);
 
-                UploadedFile.SaveAs(FolderPath);
+                UploadedFile.SaveAs(FolderPath); //save the file to the folder
 
                 var currentFullFileNamePath = Path.GetFullPath(FileName);
                 System.IO.File.Copy(FolderPath, Path.Combine(Server.MapPath("~/AAI/upload/tmp"), FileName), true);
 
                 var tempFilePath = Path.Combine(Server.MapPath("~/AAI/upload/tmp"), FileName);
 
-                var userSelectDatabase = Request.Form["UserSelectDatabase"].ToString(); //this will get selected value
+                var userSelectDatabase = Request.Form["UserSelectDatabase"].ToString(); //this will get selected value from front end which database the user wants to insert in
+                if (string.IsNullOrEmpty(userSelectDatabase))
+                {
+                    TempData["MsgChangeStatus"] = "No operation because UAT or PROD database is not selected yet";
+                    return View("Index");
+                }
 
+                //Validating the file if any missing value in columns: UPC or NRF code or both data is missing in a row and display a system message
+                using (var stream = new FileStream(FolderPath, FileMode.Open))
+                {
+                    using (var reader = ExcelReaderFactory.CreateReader(stream))
+                    {
+                        bool isFirstRow = true; // Flag to skip the first row
+
+                        do
+                        {
+                            while (reader.Read())
+                            {
+                                if (isFirstRow)
+                                {
+                                    isFirstRow = false;
+                                    continue; // Skip the first row
+                                }
+
+                                string upc = reader.GetString(0);
+                                string nrfCode = reader.GetString(1);
+
+                                if (string.IsNullOrEmpty(upc) || string.IsNullOrEmpty(nrfCode))
+                                {
+                                    // Add code to display a system message
+                                    TempData["MsgChangeStatus"] = "The file validation is failed because UPC / NRF code is missing";
+                                    return View("Index");
+                                }
+                            }
+                        } while (reader.NextResult()); // Move to the next sheet if any
+                    }
+                }
+
+
+                //start the insertion/updating process
                 var payload_AAINRF_Process_Cycle = new AAI_File_Upload_Process(tempFilePath, userSelectDatabase);
 
                 try
